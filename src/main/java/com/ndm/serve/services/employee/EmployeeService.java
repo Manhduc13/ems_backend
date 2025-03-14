@@ -23,7 +23,7 @@ public interface EmployeeService {
 
     boolean delete(long id) throws ResourceNotFoundException;
 
-    EmployeeDTO banned(long id) throws ResourceNotFoundException;
+    boolean changeStatus(long id) throws ResourceNotFoundException;
 
     Account changePassword(long id, ChangePasswordRequestDTO request) throws ResourceNotFoundException;
 }

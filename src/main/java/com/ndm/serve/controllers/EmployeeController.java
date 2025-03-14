@@ -92,9 +92,16 @@ public class EmployeeController {
         return ResponseEntity.ok(employeeService.update(id, request));
     }
 
-    @PutMapping("/banned/{id}")
+    @PutMapping("/changeStatus/{id}")
     public ResponseEntity<?> banned(@PathVariable("id") Long id) throws ResourceNotFoundException {
-        return ResponseEntity.ok(employeeService.banned(id));
+        boolean success = employeeService.changeStatus(id);
+        Map<String, Boolean> response = new HashMap<>();
+        if (success) {
+            response.put("changed", Boolean.TRUE);
+        } else {
+            response.put("changed", Boolean.FALSE);
+        }
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete/{id}")

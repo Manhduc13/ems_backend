@@ -4,6 +4,7 @@ import com.ndm.serve.dtos.email.EmailRequestDTO;
 import com.ndm.serve.dtos.employee.EmployeeCUDTO;
 import com.ndm.serve.dtos.employee.EmployeeDTO;
 import com.ndm.serve.dtos.resetPassword.ChangePasswordRequestDTO;
+import com.ndm.serve.enums.EmployeeRole;
 import com.ndm.serve.exceptions.ResourceNotFoundException;
 import com.ndm.serve.mappers.EmployeeMapper;
 import com.ndm.serve.models.Account;
@@ -196,13 +197,22 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeDTO banned(long id) throws ResourceNotFoundException {
+    public boolean changeStatus(long id) throws ResourceNotFoundException {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found for this id: " + id));
 
-        employee.setActive(false);
-
-        return employeeMapper.toEmployeeDTO(employeeRepository.save(employee));
+        Set<Role> roles = employee.getRoles();
+        Set<EmployeeRole> roleNames = new HashSet<>();
+        for (Role role : roles) {
+            roleNames.add(role.getName());
+        }
+        if (roleNames.contains(EmployeeRole.ADMIN)) {
+            return false;
+        }
+        boolean currentStatus = employee.isActive();
+        employee.setActive(!currentStatus);
+        employeeRepository.save(employee);
+        return true;
     }
 
     @Override
