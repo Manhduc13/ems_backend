@@ -79,4 +79,9 @@ public class EmployeeController {
         }
         return ResponseEntity.ok(employeeService.changePassword(id, request));
     }
+    
+    @GetMapping("/myInfo/{id}")
+    public ResponseEntity<?> getMyInfo(@PathVariable Long id) throws ResourceNotFoundException {
+        return ResponseEntity.ok(employeeService.getById(id));
+    }
 }
