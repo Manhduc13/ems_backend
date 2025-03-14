@@ -79,7 +79,6 @@ public class EmployeeController {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }
         EmployeeDTO employeeDTO = employeeService.create(request);
-        System.out.println(employeeDTO);
         return ResponseEntity.ok(employeeDTO);
     }
 
