@@ -1,8 +1,12 @@
 package com.ndm.serve.services.resetPassword;
 
 import com.ndm.serve.dtos.email.EmailRequestDTO;
+import com.ndm.serve.dtos.employee.EmployeeDTO;
+import com.ndm.serve.dtos.resetPassword.NewPasswordDTO;
 import com.ndm.serve.dtos.resetPassword.ResetPasswordRequestDTO;
 import com.ndm.serve.exceptions.ResourceNotFoundException;
+import com.ndm.serve.mappers.EmployeeMapper;
+import com.ndm.serve.models.Employee;
 import com.ndm.serve.repositories.EmployeeRepository;
 import com.ndm.serve.services.mail.EmailService;
 import io.jsonwebtoken.Jwts;
@@ -13,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +34,8 @@ import java.util.Map;
 public class ResetPasswordServiceImpl implements ResetPasswordService {
     EmailService emailService;
     EmployeeRepository employeeRepository;
+    PasswordEncoder passwordEncoder;
+    EmployeeMapper employeeMapper;
 
     @NonFinal
     @Value("${app.security.access-token-secret-key}")
@@ -38,13 +45,15 @@ public class ResetPasswordServiceImpl implements ResetPasswordService {
     @Value("${app.security.reset-token-expired-in-second}")
     private Integer expireTime;
 
-    @Value("${ems.email.template.reset-password.name}")
+    @Value("${ems.email.template.forgot-password.name}")
     @NonFinal
     private String resetTemplate;
 
     @Override
     public void sendEmail(ResetPasswordRequestDTO resetPasswordRequestDTO) throws ResourceNotFoundException {
-        if (employeeRepository.findByEmail(resetPasswordRequestDTO.getEmail()).isPresent()) {
+        Employee employee = employeeRepository.findByEmail(resetPasswordRequestDTO.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with email: " + resetPasswordRequestDTO.getEmail()));
+        if (employee != null) {
             // Send email
             EmailRequestDTO emailRequestDTO = new EmailRequestDTO();
             emailRequestDTO.setTo(resetPasswordRequestDTO.getEmail());
@@ -54,6 +63,7 @@ public class ResetPasswordServiceImpl implements ResetPasswordService {
             String token = generateResetPasswordToken(resetPasswordRequestDTO);
 
             Map<String, Object> model = Map.of(
+                    "username", employee.getUsername(),
                     "email", resetPasswordRequestDTO.getEmail(),
                     "token", token
             );
@@ -76,5 +86,19 @@ public class ResetPasswordServiceImpl implements ResetPasswordService {
                 .expiration(expiration)
                 .signWith(key)
                 .compact();
+    }
+
+    @Override
+    public EmployeeDTO resetPassword(NewPasswordDTO request) throws ResourceNotFoundException {
+        Employee employee = employeeRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found for this email: " + request.getEmail()));
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        employee.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        return employeeMapper.toEmployeeDTO(employeeRepository.save(employee));
     }
 }
