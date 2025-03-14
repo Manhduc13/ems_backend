@@ -5,10 +5,14 @@ import com.ndm.serve.dtos.employee.EmployeeDTO;
 import com.ndm.serve.dtos.resetPassword.ChangePasswordRequestDTO;
 import com.ndm.serve.exceptions.ResourceNotFoundException;
 import com.ndm.serve.models.Account;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
 public interface EmployeeService {
+    Page<EmployeeDTO> searchWithFilter(String keyword, Pageable pageable);
+
     EmployeeDTO getById(long id) throws ResourceNotFoundException;
 
     List<EmployeeDTO> getAll();

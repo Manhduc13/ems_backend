@@ -12,11 +12,15 @@ import com.ndm.serve.models.Role;
 import com.ndm.serve.repositories.EmployeeRepository;
 import com.ndm.serve.repositories.RoleRepository;
 import com.ndm.serve.services.mail.EmailService;
+import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +46,53 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Value("${ems.email.template.account-information.name}")
     @NonFinal
     private String accountTemplate;
+
+    @Override
+    public Page<EmployeeDTO> searchWithFilter(String keyword, Pageable pageable) {
+        Specification<Employee> spec = (root, query, cb) -> {
+            if (keyword == null || keyword.trim().isEmpty()) {
+                return cb.conjunction();
+            }
+
+            String searchPattern = "%" + keyword.trim().toLowerCase() + "%";
+
+            Predicate usernamePredicate = cb.like(cb.lower(root.get("username")), searchPattern);
+            Predicate phonePredicate = cb.like(root.get("phone"), searchPattern);
+            Predicate emailPredicate = cb.like(cb.lower(root.get("email")), searchPattern);
+            Predicate addressPredicate = cb.like(cb.lower(root.get("address")), searchPattern);
+
+            return cb.or(usernamePredicate, phonePredicate, emailPredicate, addressPredicate);
+        };
+
+        Page<Employee> employees = employeeRepository.findAll(spec, pageable);
+
+        return employees.map(employeeMapper::toEmployeeDTO);
+    }
+
+    public Page<EmployeeDTO> searchWithFilter(String username, String phone, String email, String address, Pageable pageable) {
+        Specification<Employee> spec = (root, query, cb) -> {
+            Predicate predicate = cb.conjunction();
+
+            if (username != null && !username.isEmpty()) {
+                predicate = cb.and(predicate, cb.like(root.get("username"), "%" + username + "%"));
+            }
+            if (phone != null && !phone.isEmpty()) {
+                predicate = cb.and(predicate, cb.like(root.get("phone"), "%" + phone + "%"));
+            }
+            if (email != null && !email.isEmpty()) {
+                predicate = cb.and(predicate, cb.like(root.get("email"), "%" + email + "%"));
+            }
+            if (address != null && !address.isEmpty()) {
+                predicate = cb.and(predicate, cb.like(root.get("address"), "%" + address + "%"));
+            }
+
+            return predicate;
+        };
+
+        Page<Employee> employees = employeeRepository.findAll(spec, pageable);
+
+        return employees.map(employeeMapper::toEmployeeDTO);
+    }
 
     @Override
     public EmployeeDTO getById(long id) throws ResourceNotFoundException {

@@ -5,14 +5,22 @@ import com.ndm.serve.dtos.employee.EmployeeDTO;
 import com.ndm.serve.dtos.resetPassword.ChangePasswordRequestDTO;
 import com.ndm.serve.exceptions.ResourceNotFoundException;
 import com.ndm.serve.services.employee.EmployeeService;
+import com.ndm.serve.utils.CustomPagedResponse;
 import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +30,37 @@ import java.util.Map;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class EmployeeController {
+
     EmployeeService employeeService;
+    PagedResourcesAssembler<EmployeeDTO> pagedResourcesAssembler;
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchWithFilter(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false, defaultValue = "username") String sortBy,
+            @RequestParam(required = false, defaultValue = "asc") String order,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "5") int size
+    ) {
+        Pageable pageable = null;
+        // Determine sorting order
+        if (order.equalsIgnoreCase("asc")) {
+            pageable = PageRequest.of(page, size, Sort.by(sortBy).ascending());
+        } else {
+            pageable = PageRequest.of(page, size, Sort.by(sortBy).descending());
+        }
+
+        Page<EmployeeDTO> employeeDTOS = employeeService.searchWithFilter(keyword, pageable);
+
+        // Convert to paged model
+        var pagedModel = pagedResourcesAssembler.toModel(employeeDTOS);
+        Collection<EntityModel<EmployeeDTO>> data = pagedModel.getContent();
+        var links = pagedModel.getLinks();
+
+        var response = new CustomPagedResponse<EntityModel<EmployeeDTO>>(data, pagedModel.getMetadata(), links);
+
+        return ResponseEntity.ok(response);
+    }
 
     @GetMapping
     public ResponseEntity<List<EmployeeDTO>> getAll() {
@@ -79,7 +117,7 @@ public class EmployeeController {
         }
         return ResponseEntity.ok(employeeService.changePassword(id, request));
     }
-    
+
     @GetMapping("/myInfo/{id}")
     public ResponseEntity<?> getMyInfo(@PathVariable Long id) throws ResourceNotFoundException {
         return ResponseEntity.ok(employeeService.getById(id));
