@@ -2,7 +2,9 @@ package com.ndm.serve.services.employee;
 
 import com.ndm.serve.dtos.employee.EmployeeCUDTO;
 import com.ndm.serve.dtos.employee.EmployeeDTO;
+import com.ndm.serve.dtos.resetPassword.ChangePasswordRequestDTO;
 import com.ndm.serve.exceptions.ResourceNotFoundException;
+import com.ndm.serve.models.Account;
 
 import java.util.List;
 
@@ -18,4 +20,6 @@ public interface EmployeeService {
     boolean delete(long id) throws ResourceNotFoundException;
 
     EmployeeDTO banned(long id) throws ResourceNotFoundException;
+
+    Account changePassword(long id, ChangePasswordRequestDTO request) throws ResourceNotFoundException;
 }

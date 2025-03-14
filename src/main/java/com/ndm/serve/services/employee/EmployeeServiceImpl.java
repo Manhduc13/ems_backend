@@ -3,6 +3,7 @@ package com.ndm.serve.services.employee;
 import com.ndm.serve.dtos.email.EmailRequestDTO;
 import com.ndm.serve.dtos.employee.EmployeeCUDTO;
 import com.ndm.serve.dtos.employee.EmployeeDTO;
+import com.ndm.serve.dtos.resetPassword.ChangePasswordRequestDTO;
 import com.ndm.serve.exceptions.ResourceNotFoundException;
 import com.ndm.serve.mappers.EmployeeMapper;
 import com.ndm.serve.models.Account;
@@ -151,5 +152,28 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setActive(false);
 
         return employeeMapper.toEmployeeDTO(employeeRepository.save(employee));
+    }
+
+    @Override
+    public Account changePassword(long id, ChangePasswordRequestDTO request) throws ResourceNotFoundException {
+        Employee employee = employeeRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found for this id: " + id));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), employee.getPassword())) {
+            throw new IllegalArgumentException("Old password is incorrect");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("New password and confirm password do not match");
+        }
+
+        employee.setPassword(passwordEncoder.encode(request.getNewPassword()));
+
+        Employee updatedPassword = employeeRepository.save(employee);
+
+        return Account.builder()
+                .username(updatedPassword.getUsername())
+                .password(updatedPassword.getPassword())
+                .build();
     }
 }

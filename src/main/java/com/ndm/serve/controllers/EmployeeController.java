@@ -2,6 +2,7 @@ package com.ndm.serve.controllers;
 
 import com.ndm.serve.dtos.employee.EmployeeCUDTO;
 import com.ndm.serve.dtos.employee.EmployeeDTO;
+import com.ndm.serve.dtos.resetPassword.ChangePasswordRequestDTO;
 import com.ndm.serve.exceptions.ResourceNotFoundException;
 import com.ndm.serve.services.employee.EmployeeService;
 import jakarta.validation.Valid;
@@ -65,5 +66,17 @@ public class EmployeeController {
         Map<String, Boolean> response = new HashMap<>();
         response.put("deleted", Boolean.TRUE);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/changePassword/{id}")
+    public ResponseEntity<?> changePassword(
+            @PathVariable("id") long id,
+            @RequestBody @Valid ChangePasswordRequestDTO request,
+            BindingResult bindingResult
+    ) throws ResourceNotFoundException {
+        if (bindingResult.hasErrors()) {
+            return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
+        }
+        return ResponseEntity.ok(employeeService.changePassword(id, request));
     }
 }
