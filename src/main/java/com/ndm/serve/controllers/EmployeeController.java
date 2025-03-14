@@ -100,9 +100,13 @@ public class EmployeeController {
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable("id") Long id) throws ResourceNotFoundException {
-        employeeService.delete(id);
+        boolean success = employeeService.delete(id);
         Map<String, Boolean> response = new HashMap<>();
-        response.put("deleted", Boolean.TRUE);
+        if (success) {
+            response.put("deleted", Boolean.TRUE);
+        } else {
+            response.put("deleted", Boolean.FALSE);
+        }
         return ResponseEntity.ok(response);
     }
 

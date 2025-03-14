@@ -67,11 +67,11 @@ public class AuthController {
     @PostMapping("/validate-token")
     public ResponseEntity<?> validateToken(@RequestBody String token) {
         boolean isValid = tokenService.validateToken(token);
-        Map<String, String> response = new HashMap<>();
+        Map<String, Boolean> response = new HashMap<>();
         if (isValid) {
-            response.put("status", "valid");
+            response.put("verify", Boolean.TRUE);
         } else {
-            response.put("status", "invalid");
+            response.put("verify", Boolean.FALSE);
         }
         return ResponseEntity.ok(response);
     }
