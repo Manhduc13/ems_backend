@@ -51,6 +51,9 @@ public class Employee {
     @Column(nullable = false)
     boolean active;
 
+    @Column(columnDefinition = "VARCHAR(MAX)")
+    String avatar;
+
     @ManyToMany
     @JoinTable(
             name = "employee_role",

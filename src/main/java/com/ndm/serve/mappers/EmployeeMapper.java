@@ -4,11 +4,13 @@ import com.ndm.serve.dtos.employee.EmployeeCUDTO;
 import com.ndm.serve.dtos.employee.EmployeeDTO;
 import com.ndm.serve.models.Employee;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring", uses = {RoleMapper.class})
 public interface EmployeeMapper {
 
     EmployeeDTO toEmployeeDTO(Employee employee);
 
+    @Mapping(target = "avatar", ignore = true)
     Employee toEmployee(EmployeeCUDTO employeeCUDTO);
 }

@@ -64,6 +64,7 @@ public class AuthServiceImpl implements AuthService, UserDetailsService {
                 .username(employee.getUsername())
                 .isActive(employee.isActive())
                 .roles(roleNames)
+                .avatar(employee.getAvatar())
                 .build();
     }
 }

@@ -26,6 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -70,31 +71,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employees.map(employeeMapper::toEmployeeDTO);
     }
 
-    public Page<EmployeeDTO> searchWithFilter(String username, String phone, String email, String address, Pageable pageable) {
-        Specification<Employee> spec = (root, query, cb) -> {
-            Predicate predicate = cb.conjunction();
-
-            if (username != null && !username.isEmpty()) {
-                predicate = cb.and(predicate, cb.like(root.get("username"), "%" + username + "%"));
-            }
-            if (phone != null && !phone.isEmpty()) {
-                predicate = cb.and(predicate, cb.like(root.get("phone"), "%" + phone + "%"));
-            }
-            if (email != null && !email.isEmpty()) {
-                predicate = cb.and(predicate, cb.like(root.get("email"), "%" + email + "%"));
-            }
-            if (address != null && !address.isEmpty()) {
-                predicate = cb.and(predicate, cb.like(root.get("address"), "%" + address + "%"));
-            }
-
-            return predicate;
-        };
-
-        Page<Employee> employees = employeeRepository.findAll(spec, pageable);
-
-        return employees.map(employeeMapper::toEmployeeDTO);
-    }
-
     @Override
     public EmployeeDTO getById(long id) throws ResourceNotFoundException {
         Employee employee = employeeRepository.findById(id)
@@ -109,7 +85,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeDTO create(EmployeeCUDTO request) throws ResourceNotFoundException {
+    public EmployeeDTO create(EmployeeCUDTO request) throws ResourceNotFoundException, IOException {
         if (request == null) {
             throw new IllegalArgumentException("Employee create request cannot be null");
         }
@@ -134,6 +110,11 @@ public class EmployeeServiceImpl implements EmployeeService {
             roles.add(role);
         }
         employee.setRoles(roles);
+        // Set employee avatar
+        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+            employee.setAvatar(request.getAvatar());
+        }
+
         // Generate account and save to entity
         Account newAccount = accountService.generateAccount(employee);
         employee.setUsername(newAccount.getUsername());
@@ -157,7 +138,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeDTO update(long id, EmployeeCUDTO request) throws ResourceNotFoundException {
+    public EmployeeDTO update(long id, EmployeeCUDTO request) throws ResourceNotFoundException, IOException {
         if (request == null) {
             throw new IllegalArgumentException("Employee update request cannot be null");
         }
@@ -182,6 +163,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         existedEmployee.setGender(request.getGender());
         existedEmployee.setAddress(request.getAddress());
         existedEmployee.setDob(request.getDob());
+
+        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
+            existedEmployee.setAvatar(request.getAvatar());
+        }
 
         return employeeMapper.toEmployeeDTO(employeeRepository.save(existedEmployee));
     }

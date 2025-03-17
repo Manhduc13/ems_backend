@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -74,7 +75,7 @@ public class EmployeeController {
 
     @PostMapping("/create")
     public ResponseEntity<?> create(@RequestBody @Valid EmployeeCUDTO request,
-                                    BindingResult bindingResult) throws ResourceNotFoundException {
+                                    BindingResult bindingResult) throws ResourceNotFoundException, IOException {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }
@@ -85,7 +86,7 @@ public class EmployeeController {
     @PutMapping("/update/{id}")
     public ResponseEntity<?> update(@PathVariable("id") Long id,
                                     @RequestBody @Valid EmployeeCUDTO request,
-                                    BindingResult bindingResult) throws ResourceNotFoundException {
+                                    BindingResult bindingResult) throws ResourceNotFoundException, IOException {
         if (bindingResult.hasErrors()) {
             return ResponseEntity.badRequest().body(bindingResult.getAllErrors());
         }

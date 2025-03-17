@@ -17,4 +17,5 @@ public class EmployeeInfoDTO {
     String username;
     Set<String> roles;
     boolean isActive;
+    String avatar;
 }

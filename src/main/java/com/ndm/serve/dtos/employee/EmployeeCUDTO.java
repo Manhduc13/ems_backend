@@ -7,6 +7,7 @@ import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.util.Date;
 import java.util.Set;
@@ -38,7 +39,10 @@ public class EmployeeCUDTO {
     String address;
 
     @PastOrPresent
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     Date dob;
+
+    String avatar;
 
     @NotNull(message = "Role is mandatory")
     Set<Long> roleIds;

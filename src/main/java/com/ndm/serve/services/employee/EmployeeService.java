@@ -8,6 +8,7 @@ import com.ndm.serve.models.Account;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface EmployeeService {
@@ -17,9 +18,9 @@ public interface EmployeeService {
 
     List<EmployeeDTO> getAll();
 
-    EmployeeDTO create(EmployeeCUDTO request) throws ResourceNotFoundException;
+    EmployeeDTO create(EmployeeCUDTO request) throws ResourceNotFoundException, IOException;
 
-    EmployeeDTO update(long id, EmployeeCUDTO request) throws ResourceNotFoundException;
+    EmployeeDTO update(long id, EmployeeCUDTO request) throws ResourceNotFoundException, IOException;
 
     boolean delete(long id) throws ResourceNotFoundException;
 
