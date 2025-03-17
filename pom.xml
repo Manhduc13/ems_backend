@@ -31,6 +31,13 @@
         <mapstruct.version>1.5.5.Final</mapstruct.version>
     </properties>
     <dependencies>
+        <!-- Cloudinary -->
+        <dependency>
+            <groupId>com.cloudinary</groupId>
+            <artifactId>cloudinary-http44</artifactId>
+            <version>1.39.0</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok-mapstruct-binding -->
         <dependency>
             <groupId>org.projectlombok</groupId>
