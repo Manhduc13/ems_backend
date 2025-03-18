@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -221,5 +223,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .username(updatedPassword.getUsername())
                 .password(updatedPassword.getPassword())
                 .build();
+    }
+
+    @Override
+    public EmployeeDTO getCurrentEmployee() throws ResourceNotFoundException {
+        SecurityContext securityContext = SecurityContextHolder.getContext();
+        String username = securityContext.getAuthentication().getName();
+        Employee employee = employeeRepository.findByUsername(username).orElse(null);
+        return employeeMapper.toEmployeeDTO(employee);
     }
 }

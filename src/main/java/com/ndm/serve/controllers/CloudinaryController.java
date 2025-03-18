@@ -16,7 +16,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/cloudinary/upload")
 @RequiredArgsConstructor
-public class CloudinaryImageUploadController {
+public class CloudinaryController {
 
     private final CloudinaryService cloudinaryService;
 
