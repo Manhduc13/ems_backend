@@ -28,5 +28,5 @@ public interface EmployeeService {
 
     Account changePassword(long id, ChangePasswordRequestDTO request) throws ResourceNotFoundException;
 
-    EmployeeDTO getCurrentEmployee() throws ResourceNotFoundException;
+    EmployeeDTO getCurrentEmployee();
 }

@@ -31,13 +31,18 @@
         <mapstruct.version>1.5.5.Final</mapstruct.version>
     </properties>
     <dependencies>
+        <!-- Jasper Report -->
+        <dependency>
+            <groupId>net.sf.jasperreports</groupId>
+            <artifactId>jasperreports</artifactId>
+            <version>6.10.0</version>
+        </dependency>
         <!-- Cloudinary -->
         <dependency>
             <groupId>com.cloudinary</groupId>
             <artifactId>cloudinary-http44</artifactId>
             <version>1.39.0</version>
         </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok-mapstruct-binding -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -118,6 +123,14 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>jaspersoft</id>
+            <url>https://jaspersoft.jfrog.io/artifactory/third-party-ce-artifacts/</url>
+        </repository>
+    </repositories>
+
 
     <build>
         <plugins>

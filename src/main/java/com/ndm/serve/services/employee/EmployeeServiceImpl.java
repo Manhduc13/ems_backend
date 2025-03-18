@@ -226,7 +226,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
-    public EmployeeDTO getCurrentEmployee() throws ResourceNotFoundException {
+    public EmployeeDTO getCurrentEmployee() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         String username = securityContext.getAuthentication().getName();
         Employee employee = employeeRepository.findByUsername(username).orElse(null);
