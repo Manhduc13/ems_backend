@@ -17,9 +17,11 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Employee {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     long id;
 
     @Column(nullable = false)
@@ -61,6 +63,6 @@ public class Employee {
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     Set<Role> roles = new HashSet<>();
 
-    @ManyToMany(mappedBy = "employees")
+    @ManyToMany(mappedBy = "members")
     Set<Project> projects = new HashSet<>();
 }

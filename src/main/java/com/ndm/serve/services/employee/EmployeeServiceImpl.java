@@ -104,18 +104,9 @@ public class EmployeeServiceImpl implements EmployeeService {
         // Convert CUDTO to entity
         Employee employee = employeeMapper.toEmployee(request);
         // Convert role ids to role
-        Set<Long> roleIds = request.getRoleIds();
-        Set<Role> roles = new HashSet<>();
-        for (Long roleId : roleIds) {
-            Role role = roleRepository.findById(roleId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Role not found for this id: " + roleId));
-            roles.add(role);
-        }
+        Set<Role> roles = idToRoles(request.getRoleIds());
         employee.setRoles(roles);
-        // Set employee avatar
-        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            employee.setAvatar(request.getAvatar());
-        }
+
 
         // Generate account and save to entity
         Account newAccount = accountService.generateAccount(employee);
@@ -165,10 +156,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         existedEmployee.setGender(request.getGender());
         existedEmployee.setAddress(request.getAddress());
         existedEmployee.setDob(request.getDob());
+        existedEmployee.setAvatar(request.getAvatar());
 
-        if (request.getAvatar() != null && !request.getAvatar().isEmpty()) {
-            existedEmployee.setAvatar(request.getAvatar());
-        }
+        // Convert role ids to role
+        Set<Role> roles = idToRoles(request.getRoleIds());
+        existedEmployee.setRoles(roles);
+
 
         return employeeMapper.toEmployeeDTO(employeeRepository.save(existedEmployee));
     }
@@ -231,5 +224,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         String username = securityContext.getAuthentication().getName();
         Employee employee = employeeRepository.findByUsername(username).orElse(null);
         return employeeMapper.toEmployeeDTO(employee);
+    }
+
+    private Set<Role> idToRoles(Set<Long> ids) throws ResourceNotFoundException {
+        Set<Role> roles = new HashSet<>();
+        for (Long roleId : ids) {
+            Role role = roleRepository.findById(roleId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Role not found for this id: " + roleId));
+            roles.add(role);
+        }
+        return roles;
     }
 }

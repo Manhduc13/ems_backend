@@ -4,11 +4,12 @@ import com.ndm.serve.enums.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Nationalized;
 import org.hibernate.annotations.TimeZoneColumn;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.Set;
 
 @Entity
@@ -19,17 +20,21 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     long id;
 
     @Column(nullable = false, unique = true)
     String name;
 
+    @Nationalized
+    @Column(length = 1000)
     String description;
 
-    Date startDate;
+    LocalDate startDate;
 
     ProjectStatus status;
 
@@ -48,5 +53,7 @@ public class Project {
             name = "project_employee",
             joinColumns = @JoinColumn(name = "project_id"),
             inverseJoinColumns = @JoinColumn(name = "employee_id"))
-    Set<Employee> employees;
+    Set<Employee> members;
+
+    long leader_id;
 }

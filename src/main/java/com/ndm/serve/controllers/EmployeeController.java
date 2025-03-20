@@ -107,9 +107,8 @@ public class EmployeeController {
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<?> delete(@PathVariable("id") Long id) throws ResourceNotFoundException {
-        boolean success = employeeService.delete(id);
         Map<String, Boolean> response = new HashMap<>();
-        if (success) {
+        if (employeeService.delete(id)) {
             response.put("deleted", Boolean.TRUE);
         } else {
             response.put("deleted", Boolean.FALSE);
@@ -130,7 +129,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/myInfo")
-    public ResponseEntity<EmployeeDTO> getMyInfo() throws ResourceNotFoundException {
+    public ResponseEntity<EmployeeDTO> getMyInfo() {
         return ResponseEntity.ok(employeeService.getCurrentEmployee());
     }
 }

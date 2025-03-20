@@ -2,13 +2,16 @@ package com.ndm.serve.controllers;
 
 import com.ndm.serve.dtos.employee.EmployeeDTO;
 import com.ndm.serve.dtos.employee.EmployeeReportDTO;
+import com.ndm.serve.dtos.project.ProjectDTO;
+import com.ndm.serve.dtos.project.ProjectReportDTO;
 import com.ndm.serve.dtos.role.RoleDTO;
+import com.ndm.serve.exceptions.ResourceNotFoundException;
 import com.ndm.serve.services.employee.EmployeeService;
 import com.ndm.serve.services.jasperReport.JasperReportService;
+import com.ndm.serve.services.project.ProjectService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.JRException;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.http.HttpHeaders;
@@ -24,10 +27,10 @@ import java.util.*;
 @RequestMapping("/api/report")
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@Slf4j
 public class JasperReportController {
     JasperReportService jasperReportService;
     EmployeeService employeeService;
+    ProjectService projectService;
 
     @GetMapping("/employee")
     public ResponseEntity<byte[]> generateEmployeeReport() throws JRException, IOException {
@@ -46,10 +49,9 @@ public class JasperReportController {
                     .phone(employee.getPhone())
                     .dob(employee.getDob())
                     .email(employee.getEmail())
-                    .roles(roleString.toString())
+                    .roles(String.join(", ", roleString))
                     .build());
         }
-        log.info(employeeReportDTOList.toString());
         JRBeanCollectionDataSource tableDataSource = new JRBeanCollectionDataSource(employeeReportDTOList);
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("TABLE_DATA_SOURCE", tableDataSource);
@@ -68,7 +70,57 @@ public class JasperReportController {
                 .lastName(currentEmployee.getLastName())
                 .username(currentEmployee.getUsername())
                 .email(currentEmployee.getEmail())
-                .roles(roleNames.toString())
+                .roles(String.join(", ", roleNames))
+                .build());
+
+        byte[] pdfBytes = jasperReportService.generateEmployeeReport(reportName, parameters, employees);
+
+        // Set response headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Disposition", "inline; filename=report.pdf");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(pdfBytes);
+    }
+
+    @GetMapping("/project")
+    public ResponseEntity<byte[]> generateProjectReport() throws JRException, IOException, ResourceNotFoundException {
+        String reportName = "project";
+
+        List<ProjectReportDTO> projectReportDTOS = new ArrayList<>();
+        for (ProjectDTO projectDTO : projectService.getAll()) {
+            String leaderName = "none";
+            if (projectDTO.getLeader_id() != 0) {
+                EmployeeDTO leader = employeeService.getById(projectDTO.getLeader_id());
+                leaderName = leader.getFirstName() + " " + leader.getLastName();
+            }
+
+            projectReportDTOS.add(
+                    ProjectReportDTO.builder()
+                            .name(projectDTO.getName())
+                            .startDate(projectDTO.getStartDate().toString())
+                            .status(projectDTO.getStatus().name().toLowerCase())
+                            .budget(projectDTO.getBudget().toString())
+                            .leader(leaderName)
+                            .size(String.valueOf(projectDTO.getMembers().size()))
+                            .build()
+            );
+        }
+
+        JRBeanCollectionDataSource tableDataSource = new JRBeanCollectionDataSource(projectReportDTOS);
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("TABLE_DATA_SOURCE", tableDataSource);
+
+        EmployeeDTO currentEmployee = employeeService.getCurrentEmployee();
+
+        List<EmployeeReportDTO> employees = new ArrayList<>(); // datasource
+        employees.add(EmployeeReportDTO.builder()
+                .firstName(currentEmployee.getFirstName())
+                .lastName(currentEmployee.getLastName())
+                .username(currentEmployee.getUsername())
+                .email(currentEmployee.getEmail())
+                .phone(currentEmployee.getPhone())
                 .build());
 
         byte[] pdfBytes = jasperReportService.generateEmployeeReport(reportName, parameters, employees);

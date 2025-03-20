@@ -10,4 +10,6 @@ public interface JasperReportService {
     //void generateReport() throws IOException, JRException;
 
     byte[] generateEmployeeReport(String reportName, Map<String, Object> parameters, List<?> dataSource) throws JRException, IOException;
+
+    byte[] generateProjectReport(String reportName, List<Map<String, Object>> parameters) throws JRException, IOException;
 }
