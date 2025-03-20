@@ -60,4 +60,7 @@ public class Employee {
             joinColumns = @JoinColumn(name = "employee_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id"))
     Set<Role> roles = new HashSet<>();
+
+    @ManyToMany(mappedBy = "employees")
+    Set<Project> projects = new HashSet<>();
 }
