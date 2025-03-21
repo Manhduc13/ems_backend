@@ -53,6 +53,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/cloudinary/upload").permitAll()
                         .requestMatchers("/api/resetPassword/**").permitAll()
+
                         .anyRequest().authenticated())
                 .httpBasic(Customizer.withDefaults());
         return http.build();
