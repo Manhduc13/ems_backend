@@ -5,19 +5,8 @@ import java.util.Map;
 import java.util.Set;
 
 public interface RedisService {
-
-    /**
-     * @param key
-     * @param value
-     * @purpose Save key and value to redis
-     */
     void set(String key, Object value);
 
-    /**
-     * @param key
-     * @param timeoutInMinutes
-     * @purpose After amount of time, data with that key will be deleted
-     */
     void setTimeToLive(String key, long timeoutInMinutes);
 
     void hashSet(String key, String field, Object value);

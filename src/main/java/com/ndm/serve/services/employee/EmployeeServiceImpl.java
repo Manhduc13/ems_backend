@@ -13,6 +13,7 @@ import com.ndm.serve.models.Role;
 import com.ndm.serve.repositories.EmployeeRepository;
 import com.ndm.serve.repositories.RoleRepository;
 import com.ndm.serve.services.mail.EmailService;
+import com.ndm.serve.services.redis.RedisService;
 import jakarta.persistence.criteria.Predicate;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     AccountService accountService;
     EmailService emailService;
 
+    RedisService redisService;
+
     @Value("${ems.email.template.account-information.name}")
     @NonFinal
     private String accountTemplate;
@@ -75,15 +78,43 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public EmployeeDTO getById(long id) throws ResourceNotFoundException {
+        // Check data in Redis
+        String redisKey = "employee:" + id;
+        EmployeeDTO cachedEmployee = (EmployeeDTO) redisService.get(redisKey);
+
+        if (cachedEmployee != null) {
+            return cachedEmployee;
+        }
+
+        // Query to db
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found for this id: " + id));
-        return employeeMapper.toEmployeeDTO(employee);
+        EmployeeDTO employeeDTO = employeeMapper.toEmployeeDTO(employee);
+
+        // Store data to Redis with TTL 10 mins
+        redisService.set(redisKey, employeeDTO);
+        redisService.setTimeToLive(redisKey, 1);
+
+        return employeeDTO;
     }
 
     @Override
     public List<EmployeeDTO> getAll() {
+        String redisKey = "employees:all";
+        List<EmployeeDTO> cachedEmployees = (List<EmployeeDTO>) redisService.get(redisKey);
+        if (cachedEmployees != null) {
+            return cachedEmployees;
+        }
+
         List<Employee> employees = employeeRepository.findAll();
-        return employees.stream().map(employeeMapper::toEmployeeDTO).collect(Collectors.toList());
+        List<EmployeeDTO> employeeDTOs = employees.stream()
+                .map(employeeMapper::toEmployeeDTO)
+                .collect(Collectors.toList());
+
+        redisService.set(redisKey, employeeDTOs);
+        redisService.setTimeToLive(redisKey, 10);
+
+        return employeeDTOs;
     }
 
     @Override
@@ -126,8 +157,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         emailRequestDTO.setVariables(model);
         emailService.sendEmailAsync(emailRequestDTO);
 
+        // Delete cache of all employees
+        redisService.delete("employees:all");
+        EmployeeDTO employeeDTO = employeeMapper.toEmployeeDTO(employeeRepository.save(employee));
+
+        String redisKey = "employee:" + employeeDTO.getId();
+        redisService.set(redisKey, employeeDTO);
+        redisService.setTimeToLive(redisKey, 10);
         // Save new employee to db
-        return employeeMapper.toEmployeeDTO(employeeRepository.save(employee));
+        return employeeDTO;
     }
 
     @Override
@@ -162,8 +200,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         Set<Role> roles = idToRoles(request.getRoleIds());
         existedEmployee.setRoles(roles);
 
+        // Delete cache of all employees
+        redisService.delete("employees:all");
+        EmployeeDTO employeeDTO = employeeMapper.toEmployeeDTO(employeeRepository.save(existedEmployee));
 
-        return employeeMapper.toEmployeeDTO(employeeRepository.save(existedEmployee));
+        String redisKey = "employee:" + employeeDTO.getId();
+        redisService.set(redisKey, employeeDTO);
+        redisService.setTimeToLive(redisKey, 10);
+
+        return employeeDTO;
     }
 
     @Override
@@ -173,26 +218,39 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         employeeRepository.delete(existedEmployee);
 
-        return !employeeRepository.existsById(id);
+        boolean isDeleted = !employeeRepository.existsById(id);
+
+        if (isDeleted) {
+            // Xóa khỏi Redis
+            redisService.delete("employee:" + id);
+            redisService.delete("employees:all");
+        }
+
+        return isDeleted;
     }
 
     @Override
     public boolean changeStatus(long id) throws ResourceNotFoundException {
         Employee employee = employeeRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found for this id: " + id));
-
+        boolean result = true;
         Set<Role> roles = employee.getRoles();
         Set<EmployeeRole> roleNames = new HashSet<>();
         for (Role role : roles) {
             roleNames.add(role.getName());
         }
         if (roleNames.contains(EmployeeRole.ADMIN)) {
-            return false;
+            result = false;
         }
         boolean currentStatus = employee.isActive();
         employee.setActive(!currentStatus);
         employeeRepository.save(employee);
-        return true;
+
+        if (result) {
+            redisService.delete("employee:" + id);
+            redisService.delete("employees:all");
+        }
+        return result;
     }
 
     @Override
